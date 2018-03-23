@@ -165,7 +165,7 @@ void lp_print_object_pool(LP)
 
 }
 
-lp_obj* lp_obj_new(LP, int type)
+lp_obj lp_obj_new(LP, int type)
 {
 	lp_obj* n;
 	struct LpObjPool *p = lp->obj_pool;
@@ -443,9 +443,9 @@ void lp_obj_array_release(LP, int count, void* item_pool, int item_index)
 	pool->not_used += count;
 }
 
-_lp_dict* lp_dict_new(LP)
+lp_dict* _lp_dict_new(LP)
 {
-	_lp_dict* n;
+	lp_dict* n;
 	struct LpDictPool *p = lp->dict_pool;
 	while (1)
 	{

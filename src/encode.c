@@ -618,7 +618,7 @@ REG_TYPE do_set_ctx(struct CompileState *cst, struct Token* k, struct Token* v)
 		struct TListItem* kk;
 		int n, l;
 
-		if (v->type  == S_TUPLE || v->type == S_LIST)
+		if ((v & 0x7)  == S_TUPLE || (v & 0x7) == S_LIST)
 		{
 			struct IntList tmps = { 0 };
 			struct IntListItem *lp;

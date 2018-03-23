@@ -39,8 +39,8 @@ lp_obj* lp_str(LP,lp_obj* self) {
  * is returned.
  */
 int lp_bool(LP,lp_obj* v) {
-    switch(v->type) {
-        case LP_INT: return v->integer != 0;
+    switch((v & 0x7)) {
+        case LP_INT: return lp_obj_to_int(lp, v) != 0;
 		case LP_DOUBLE:	return v->doublen != 0.0;
         case LP_NONE: return 0;
         case LP_STRING: return v->string.len != 0;
