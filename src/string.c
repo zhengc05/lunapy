@@ -179,22 +179,25 @@ lp_obj lpf_replace(LP) {
     lp_obj rr;
     char *r;
     char *d;
+	lp_string *ss = lp_obj_to_string(s);
+	lp_string *ks = lp_obj_to_string(k);
+	lp_string *vs = lp_obj_to_string(v);
     while ((i = _lp_str_index(s,i,k)) != -1) {
         n += 1;
-        i += k->string.len;
+        i += ks->len;
     }
 /*     fprintf(stderr,"ns: %d\n",n); */
-    l = s->string.len + n * (v->string.len-k->string.len);
+    l = ss->len + n * (vs->len-ks->len);
     rr = lp_string_t(lp,l);
-    r = rr->string.info->s;
+    r = lp_obj_to_string(rr)->s;
     d = r;
 	i = 0;  //
     while ((n = _lp_str_index(s,i,k)) != -1) {
-        memcpy(d,s->string.val+i,c=(n-i)); d += c;
-        i = n + k->string.len;
-        memcpy(d,v->string.val,v->string.len); d += v->string.len;
+        memcpy(d,ss->val+i,c=(n-i)); d += c;
+        i = n + ks->len;
+        memcpy(d,vs->val,vs->len); d += vs->len;
     }
-    memcpy(d,s->string.val+i,s->string.len-i);
+    memcpy(d,ss->val+i,ss->len-i);
 
     return rr;
 }

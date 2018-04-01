@@ -179,11 +179,11 @@ LP_MATH_FUNC2(fmod)
  * which is laid between 1/2 <= abs(r) < 1.
  * if x = 0, the (r, y) = (0, 0).
  */
-static lp_obj* math_frexp(LP) {
+static lp_obj math_frexp(LP) {
     double x = LP_NUM(0);
     int    y = 0;   
     double r = 0.0;
-    lp_obj* rList = lp_list(lp);
+    lp_obj rList = lp_list_new(lp);
 
     errno = 0;
     r = frexp(x, &y);
@@ -272,11 +272,11 @@ LP_MATH_FUNC1(log10)
  * x and y is the fractional part of x, both holds
  * the same sign as x.
  */
-static lp_obj* math_modf(LP) {
+static lp_obj math_modf(LP) {
     double x = LP_NUM(0);
     double y = 0.0; 
     double r = 0.0;
-    lp_obj* rList = lp_list(lp);
+    lp_obj rList = lp_list_new(lp);
 
     errno = 0;
     r = modf(x, &y);

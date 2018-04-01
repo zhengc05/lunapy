@@ -39,21 +39,11 @@ int lp_hash(LP,lp_obj v) {
 			lp_string* string = lp_obj_to_string(lp, v);
 			return _lua_hash(string->val, string->len);
 		}
-		case LP_DICT: {
-			lp_dict* dict = lp_obj_to_dict(lp, v);
-			return _lua_hash(&dict->items, sizeof(void*));
-		}
-        case LP_LIST: {
-            int r = lp_obj_to_list(v)->len; int n; for(n=0; n<v->list->len; n++) {
-            lp_obj* vv = v->list->items[n]; r += vv->type != LP_LIST?lp_hash(lp,v->list->items[n]) : _lua_hash(&vv->list,sizeof(void*)); } return r;
-        }
-        case LP_FNC: return _lua_hash(&v->fnc.info,sizeof(void*));
-        case LP_DATA: return _lua_hash(&v->data.val,sizeof(void*));
     }
     lp_raise(0,lp_string_new(lp, "(lp_hash) TypeError: value unhashable"));
 }
 
-void _lp_dict_hash_set(LP,lp_dict *self, int hash, lp_obj* k, lp_obj* v) {
+void _lp_dict_hash_set(LP,lp_dict *self, int hash, lp_obj k, lp_obj v) {
     lp_item item;
     int i,idx = hash&self->mask;
     for (i=idx; i<idx+self->alloc; i++) {
@@ -95,7 +85,7 @@ void _lp_dict_lp_realloc(LP,lp_dict *self,int len) {
 	}
 }
 
-int _lp_dict_hash_find(LP,lp_dict *self, int hash, lp_obj* k) {
+int _lp_dict_hash_find(LP,lp_dict *self, int hash, lp_obj k) {
     int i,idx = hash&self->mask;
     for (i=idx; i<idx+self->alloc; i++) {
         int n = i&self->mask;
@@ -107,11 +97,11 @@ int _lp_dict_hash_find(LP,lp_dict *self, int hash, lp_obj* k) {
     }
     return -1;
 }
-int _lp_dict_find(LP,lp_dict *self,lp_obj* k) {
+int _lp_dict_find(LP,lp_dict *self,lp_obj k) {
     return _lp_dict_hash_find(lp,self,lp_hash(lp,k),k);
 }
 
-void _lp_dict_set(LP,lp_dict *self,lp_obj* k, lp_obj* v) {
+void _lp_dict_set(LP,lp_dict *self,lp_obj k, lp_obj v) {
     int hash = lp_hash(lp,k); int n = _lp_dict_hash_find(lp,self,hash,k);
     if (n == -1) {
         if (self->len >= (self->alloc/2)) {
@@ -127,13 +117,13 @@ void _lp_dict_set(LP,lp_dict *self,lp_obj* k, lp_obj* v) {
     }
 }
 
-void _lp_dict_setx(LP,lp_dict *self,lp_obj* k, lp_obj* v) {
+void _lp_dict_setx(LP,lp_dict *self,lp_obj k, lp_obj v) {
     _lp_dict_setx(lp,self,k,v);
    LP_OBJ_DEC(k);
    LP_OBJ_DEC(v);
 }
 
-lp_obj* _lp_dict_get(LP,lp_dict *self,lp_obj* k, const char *error) {
+lp_obj _lp_dict_get(LP,lp_dict *self,lp_obj k, const char *error) {
     int n = _lp_dict_find(lp,self,k);
     if (n < 0) {
         lp_raise(0,lp_add(lp,lp_string_new(lp, "(_lp_dict_get) KeyError: "),lp_str(lp,k)));
@@ -141,7 +131,7 @@ lp_obj* _lp_dict_get(LP,lp_dict *self,lp_obj* k, const char *error) {
     RETURN_LP_OBJ(self->items[n].val);
 }
 
-void _lp_dict_del(LP,lp_dict *self,lp_obj* k, const char *error) {
+void _lp_dict_del(LP,lp_dict *self,lp_obj k, const char *error) {
     int n = _lp_dict_find(lp,self,k);
     if (n < 0) {
         lp_raise(,lp_add(lp,lp_string_new(lp, "(_lp_dict_del) KeyError: "),lp_str(lp,k)));
@@ -173,7 +163,7 @@ lp_obj lp_dict_copy(LP,lp_obj rr) {
 		LP_OBJ_INC(r->items[i].val);
 	}
     r->dtype = 1;
-    return ((unsigned int)r) | LP_DICT;
+    RETURN_LP_OBJ_NEW(r, LP_DICT);
 }
 
 int _lp_dict_next(LP,lp_dict *self) {
@@ -198,7 +188,7 @@ lp_obj lpf_merge(LP) {
         _lp_dict_set(lp,self_d,
             dict->items[n].key,dict->items[n].val);
     }
-    return LP_NONE;
+    RETURN_LP_NONE;
 }
 
 /* Function: lp_dict
@@ -212,7 +202,6 @@ lp_obj lpf_merge(LP) {
  * The newly created dictionary.
  */
 lp_obj lp_dict_new(LP) {
-    lp_obj r = LP_DICT;
     lp_dict* dict = _lp_dict_new(lp);
 	dict->items = 0;
 	dict->len = 0;
@@ -220,11 +209,11 @@ lp_obj lp_dict_new(LP) {
 	dict->mask = 0;
 	dict->meta = 0;
     dict->dtype = 1;
-    return  ((unsigned int)dict) | LP_DICT;
+    RETURN_LP_OBJ_NEW(dict, LP_DICT);
 }
 
-lp_obj* lp_dict_n(LP,int n, lp_obj** argv) {
-    lp_obj* r = lp_dict(lp);
+lp_obj lp_dict_n(LP,int n, lp_obj** argv) {
+    lp_obj r = lp_dict_new(lp);
     int i; for (i=0; i<n; i++) { lp_set(lp,r,argv[i*2],argv[i*2+1]); }
     return r;
 }

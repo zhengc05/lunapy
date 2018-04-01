@@ -105,8 +105,8 @@ lp_obj lpf_istype(LP) {
 	if (lp_cmp(lp, t, lp_string_new(lp, "int")) == 0) { return lp_number_from_int(lp, (v & 0x7) == LP_INT); }
     if (lp_cmp(lp, t, lp_string_new(lp, "float")) == 0) { return lp_number_from_int(lp, (v & 0x7) == LP_DOUBLE); }
 	if (lp_cmp(lp, t, lp_string_new(lp, "number")) == 0) { return lp_number_from_int(lp, (v & 0x7) == LP_INT || (v & 0x7) == LP_DOUBLE); }
-    if (lp_cmp(lp, t, lp_string_new(lp, "fnc")) == 0) { return lp_number_from_int(lp, (v & 0x7) == LP_FNC && (v->fnc.ftype&2) == 0); }
-    if (lp_cmp(lp, t, lp_string_new(lp, "method")) == 0) { return lp_number_from_int(lp, (v & 0x7) == LP_FNC && (v->fnc.ftype&2) != 0); }
+    if (lp_cmp(lp, t, lp_string_new(lp, "fnc")) == 0) { return lp_number_from_int(lp, (v & 0x7) == LP_FNC && (lp_obj_to_fnc(v)->ftype&2) == 0); }
+    if (lp_cmp(lp, t, lp_string_new(lp, "method")) == 0) { return lp_number_from_int(lp, (v & 0x7) == LP_FNC && (lp_obj_to_fnc(v)->ftype&2) != 0); }
     lp_raise(0, lp_string_new(lp, "(is_type) TypeError: ?"));
 }
 
@@ -122,11 +122,15 @@ lp_obj lpf_float(LP) {
     if (type == LP_INT) {
 		return lp_number_from_double(lp, lp_obj_to_int(lp, v));
 	}
-    if (type == LP_STRING && v->string.len < 32) {
-        char s[32]; memset(s,0,v->string.len+1);
-        memcpy(s,v->string.val,v->string.len);
-        if (strchr(s,'.')) { return lp_number_from_double(lp, atof(s)); }
-        return(lp_number_from_double(lp, strtol(s,0,ord)));
+    if (type == LP_STRING) {
+		lp_string *vs = lp_obj_to_string(v);
+		if (vs->len < 32)
+		{
+			char s[32]; memset(s, 0, vs->len + 1);
+			memcpy(s, vs->val, vs->len);
+			if (strchr(s, '.')) { return lp_number_from_double(lp, atof(s)); }
+			return(lp_number_from_double(lp, strtol(s, 0, ord)));
+		}
     }
     lp_raise(0,lp_string_new(lp, "(lp_float) TypeError: ?"));
 }
@@ -137,10 +141,10 @@ lp_obj lpf_save(LP) {
     lp_obj v = LP_OBJ(1);
     FILE *f;
     f = fopen(fname,"wb");
-    if (!f) { lp_raise(0,lp_string(lp, "(lp_save) IOError: ?")); }
+    if (!f) { lp_raise(0,lp_string_new(lp, "(lp_save) IOError: ?")); }
     fwrite(v->string.val,v->string.len,1,f);
     fclose(f);
-	RETURN_LP_OBJ(lp->lp_None);
+	RETURN_LP_NONE;
 }
 
 lp_obj lpf_load(LP) {

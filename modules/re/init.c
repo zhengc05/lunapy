@@ -191,13 +191,13 @@ exception:
  */
 static lp_obj* regex_obj_split(LP)
 {
-	lp_obj* self		= LP_OBJ(0);	/* regex object */
-	lp_obj* restr	= LP_OBJ(1);	/* string */
+	lp_obj self		= LP_OBJ(0);	/* regex object */
+	lp_obj restr	= LP_OBJ(1);	/* string */
 	int maxsplit = LP_INTEGER_DEFAULT(2, 0);
-	lp_obj* maobj;				/* match object */
+	lp_obj maobj;				/* match object */
 	regexobject *re = NULL;		/* lower level regex object */
-	lp_obj* result	= lp_list(lp);
-	lp_obj* grpstr;				/* group string */
+	lp_obj result	= lp_list_new(lp);
+	lp_obj grpstr;				/* group string */
 	int	slen;					/* string length */
 	int srchloc;				/* search location */
 
@@ -260,13 +260,13 @@ static lp_obj* regex_obj_split(LP)
  */
 static lp_obj* regex_obj_findall(LP)
 {
-	lp_obj* self		= LP_OBJ(0);	/* regex object */
-	lp_obj* restr	= LP_OBJ(1);	/* string */
+	lp_obj self		= LP_OBJ(0);	/* regex object */
+	lp_obj restr	= LP_OBJ(1);	/* string */
 	int pos		= LP_INTEGER_DEFAULT(2, 0);
-	lp_obj* maobj;				/* match object */
+	lp_obj maobj;				/* match object */
 	regexobject *re = NULL;		/* lower level regex object */
-	lp_obj* result	= lp_list(lp);
-	lp_obj* grpstr;				/* group string */
+	lp_obj result	= lp_list_new(lp);
+	lp_obj grpstr;				/* group string */
 	int	slen;					/* string length */
 	int srchloc;				/* search location */
 
@@ -332,7 +332,7 @@ static lp_obj* match_obj_group(LP)
 	re = getre(lp, self);
 	if (re->re_lastok == NULL)
 		lp_raise(0, 
-				lp_string(lp, "group() only valid after successful match/search"));
+				lp_string_new(lp, "group() only valid after successful match/search"));
 
 	for (i = 0; i < RE_NREGS; i++)
 		indices[i] = -1;
@@ -351,13 +351,13 @@ static lp_obj* match_obj_group(LP)
 		i = 0;
 		LP_LOOP(1, grpidx)
 		if (grpidx->integer < 0 || grpidx->integer > RE_NREGS)
-			lp_raise(0, lp_string(lp, "group() grpidx out of range"));
+			lp_raise(0, lp_string_new(lp, "group() grpidx out of range"));
 		indices[i++] = grpidx->integer;
 		LP_END
 	}
 
 	/* generate result string list */
-	result = lp_list(lp);
+	result = lp_list_new(lp);
 	for (i = 0; i < RE_NREGS && indices[i] >= 0; i++) {
 		lp_obj* grpstr;
 		start = re->re_regs.start[indices[i]];
@@ -368,7 +368,7 @@ static lp_obj* match_obj_group(LP)
 			grpstr = lp_string_copy(lp, (const char *)re->re_lastok + start, 
 					end - start);
 		}
-		lp_setv(lp, result, lp->lp_None, grpstr);
+		lp_setv(lp, result, LP_NONE, grpstr);
 	}
 	return (single ? lp_getk(lp, result, lp_number_from_int(lp, 0)) : result);
 }
@@ -381,17 +381,17 @@ static lp_obj* match_obj_group(LP)
  */
 static lp_obj* match_obj_groups(LP)
 {
-	lp_obj* self = LP_OBJ(0);		/* match object */
+	lp_obj self = LP_OBJ(0);		/* match object */
 	regexobject *re = NULL;
 	int start;
 	int end;
 	int i;
-	lp_obj* result = lp_list(lp);
+	lp_obj result = lp_list_new(lp);
 
 	re = getre(lp, self);
 	if (re->re_lastok == NULL) {
 		lp_raise(0, 
-				lp_string(lp, "groups() only valid after successful match/search"));
+				lp_string_new(lp, "groups() only valid after successful match/search"));
 	}
 
 	for (i = 1; i < RE_NREGS; i++) {
@@ -470,30 +470,30 @@ static lp_obj* match_obj_end(LP)
  * group	- group index
  * return [start,end] position pair of matched 'group' substring.
  */
-static lp_obj* match_obj_span(LP)
+static lp_obj match_obj_span(LP)
 {
-	lp_obj* self = LP_OBJ(0);						/* match object */
+	lp_obj self = LP_OBJ(0);						/* match object */
 	int group = LP_INTEGER_DEFAULT(1, 0);	/* group */
 	regexobject *re = NULL;
 	int start;
 	int end;
-	lp_obj* result;
+	lp_obj result;
 
 	re = getre(lp, self);
 	if (re->re_lastok == NULL) {
 		lp_raise(0, 
-				lp_string(lp, "span() only valid after successful match/search"));
+				lp_string_new(lp, "span() only valid after successful match/search"));
 	}
 
 	if (group < 0 || group > RE_NREGS)
-		lp_raise(0, lp_string(lp, "IndexError: group index out of range"));
+		lp_raise(0, lp_string_new(lp, "IndexError: group index out of range"));
 
 	start = re->re_regs.start[group];
 	end   = re->re_regs.end[group];
 
-	result = lp_list(lp);
-	lp_setv(lp, result, lp->lp_None, lp_number_from_int(lp, start));
-	lp_setv(lp, result, lp->lp_None, lp_number_from_int(lp, end));
+	result = lp_list_new(lp);
+	lp_setv(lp, result, LP_NONE, lp_number_from_int(lp, start));
+	lp_setv(lp, result, LP_NONE, lp_number_from_int(lp, end));
 
 	return (result);
 }
@@ -544,24 +544,24 @@ static lp_obj* regex_compile(LP)
 	}
 
 	/* regexobject's size as magic */
-	reobj_data = lp_data(lp, (int)sizeof(regexobject), re);
+	reobj_data = lp_data_new(lp, (int)sizeof(regexobject), re);
 
 	/*
 	 * bind to regex object
 	 */
-	lp_setkv(lp, reobj, lp_string(lp, "search"), 
+	lp_setkv(lp, reobj, lp_string_new(lp, "search"),
 			lp_method(lp, reobj, regex_obj_search));
-	lp_setkv(lp, reobj, lp_string(lp, "match"), 
+	lp_setkv(lp, reobj, lp_string_new(lp, "match"),
 			lp_method(lp, reobj, regex_obj_match));
-	lp_setkv(lp, reobj, lp_string(lp, "split"),
+	lp_setkv(lp, reobj, lp_string_new(lp, "split"),
 			lp_method(lp, reobj, regex_obj_split));
-	lp_setkv(lp, reobj, lp_string(lp, "findall"),
+	lp_setkv(lp, reobj, lp_string_new(lp, "findall"),
 			lp_method(lp, reobj, regex_obj_findall));
-	lp_setkv(lp, reobj, lp_string(lp, "__data__"), reobj_data);
+	lp_setkv(lp, reobj, lp_string_new(lp, "__data__"), reobj_data);
 
-	lp_setkv(lp, reobj, lp_string(lp, "__name__"), 
-			lp_string(lp, "regular expression object"));
-	lp_setkv(lp, reobj, lp_string(lp, "__doc__"), lp_string(lp, 
+	lp_setkv(lp, reobj, lp_string_new(lp, "__name__"),
+			lp_string_new(lp, "regular expression object"));
+	lp_setkv(lp, reobj, lp_string_new(lp, "__doc__"), lp_string_new(lp,
 				"regular expression object, support methods:\n"
 				"search(str[,pos=0])-search 'str' from 'pos'\n"
 				"match(str[,pos=0])	-match 'str' from 'pos'\n"
@@ -570,7 +570,7 @@ static lp_obj* regex_compile(LP)
 	return (reobj);
 
 finally:
-	lp_raise(0, lp_string(lp, error));
+	lp_raise(0, lp_string_new(lp, error));
 }
 
 /*
@@ -680,33 +680,33 @@ void re_init(LP)
 	/*
 	 * module dict for re
 	 */
-	lp_obj* re_mod = lp_dict(lp);
+	lp_obj re_mod = lp_dict_new(lp);
 
 	/*
 	 * bind to re module
 	 */
-	lp_setkv(lp, re_mod, lp_string(lp, "compile"),	  lp_fnc(lp, regex_compile));
-	lp_setkv(lp, re_mod, lp_string(lp, "search"),		  lp_fnc(lp, regex_search));
-	lp_setkv(lp, re_mod, lp_string(lp, "match"),		  lp_fnc(lp, regex_match));
-	lp_setkv(lp, re_mod, lp_string(lp, "split"),		  lp_fnc(lp, regex_split));
-	lp_setkv(lp, re_mod, lp_string(lp, "findall"),	  lp_fnc(lp, regex_findall));
-	lp_setkv(lp, re_mod, lp_string(lp, "AWK_SYNTAX"),   lp_number_from_int(lp, RE_SYNTAX_AWK));
-	lp_setkv(lp, re_mod, lp_string(lp, "EGREP_SYNTAX"), lp_number_from_int(lp, RE_SYNTAX_EGREP));
-	lp_setkv(lp, re_mod, lp_string(lp, "GREP_SYNTAX"),  lp_number_from_int(lp, RE_SYNTAX_GREP));
-	lp_setkv(lp, re_mod, lp_string(lp, "EMACS_SYNTAX"), lp_number_from_int(lp, RE_SYNTAX_EMACS));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "compile"),	  lp_fnc_n(lp, regex_compile));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "search"),		  lp_fnc_n(lp, regex_search));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "match"),		  lp_fnc_n(lp, regex_match));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "split"),		  lp_fnc_n(lp, regex_split));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "findall"),	  lp_fnc_n(lp, regex_findall));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "AWK_SYNTAX"),   lp_number_from_int(lp, RE_SYNTAX_AWK));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "EGREP_SYNTAX"), lp_number_from_int(lp, RE_SYNTAX_EGREP));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "GREP_SYNTAX"),  lp_number_from_int(lp, RE_SYNTAX_GREP));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "EMACS_SYNTAX"), lp_number_from_int(lp, RE_SYNTAX_EMACS));
 
 	/*
 	 * bind special attibutes to re module
 	 */
-	lp_setkv(lp, re_mod, lp_string(lp, "__name__"), 
-			lp_string(lp, "regular expression module"));
-	lp_setkv(lp, re_mod, lp_string(lp, "__file__"), lp_string(lp, __FILE__));
-	lp_setkv(lp, re_mod, lp_string(lp, "__doc__"), 
-			lp_string(lp, "simple regular express implementation"));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "__name__"), 
+			lp_string_new(lp, "regular expression module"));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "__file__"), lp_string_new(lp, __FILE__));
+	lp_setkv(lp, re_mod, lp_string_new(lp, "__doc__"),
+			lp_string_new(lp, "simple regular express implementation"));
 
 	/*
 	 * bind regex module to tinypy modules[]
 	 */
-	lp_setkv(lp, lp->modules, lp_string(lp, "re"), re_mod);
+	lp_setkv(lp, lp->modules, lp_string_new(lp, "re"), re_mod);
 }
 

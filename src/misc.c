@@ -41,11 +41,11 @@ lp_obj lp_def(LP,lp_obj code, lp_obj g) {
  * the script, calls the provided C function.
  */
 lp_obj lp_fnc_n(LP,lp_obj v(LP)) {
-    return lp_fnc_new(lp,0,v,lp->lp_None,lp->lp_None,lp->lp_None);
+    return lp_fnc_new(lp,0,v,LP_NONE, LP_NONE, LP_NONE);
 }
 
 lp_obj lp_method(LP,lp_obj self,lp_obj v(LP)) {
-    return lp_fnc_new(lp,2,v,lp->lp_None,self,lp->lp_None);
+    return lp_fnc_new(lp,2,v, LP_NONE,self, LP_NONE);
 }
 
 /* Function: lp_data

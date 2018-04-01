@@ -31,25 +31,25 @@ lp_vm *_lp_init(void) {
 	lp->oldex = 0;
     lp->root = lp_list_nt(lp);
     for (i=0; i<256; i++) { lp->chars[i][0]=i; }
-    lp->_regs = lp_list(lp);
-    for (i=0; i<LP_REGS; i++) { lp_set(lp,lp->_regs,lp->lp_None, lp->lp_None); }
-    lp->builtins = lp_dict(lp);
-	lp->path = lp_list(lp);
-    lp->modules = lp_dict(lp);
-    lp->_params = lp_list(lp);
-    for (i=0; i<LP_FRAMES; i++) { lp_setv(lp,lp->_params, lp->lp_None,lp_list(lp)); }
-    lp_set(lp,lp->root, lp->lp_None,lp->builtins);
-    lp_set(lp,lp->root, lp->lp_None,lp->modules);
-    lp_set(lp,lp->root, lp->lp_None,lp->_regs);
-    lp_set(lp,lp->root, lp->lp_None,lp->_params);
-    lp_setk(lp,lp->builtins,lp_string(lp, "MODULES"),lp->modules);
-    lp_setk(lp,lp->modules,lp_string(lp, "BUILTINS"),lp->builtins);
-    lp_setk(lp,lp->builtins,lp_string(lp, "BUILTINS"),lp->builtins);
-    lp_obj* sys = lp_dict(lp);
-    lp_setkv(lp, sys, lp_string(lp, "version"), lp_string(lp, "tinypy 1.2+SVN"));
-    lp_setk(lp,lp->modules, lp_string(lp, "sys"), sys);
-	lp_setk(lp, sys, lp_string(lp, "path"), lp->path);
-	_lp_list_appendx(lp, lp->path->list, lp_string(lp, "."));
+    lp->_regs = lp_list_new(lp);
+    for (i=0; i<LP_REGS; i++) { lp_set(lp,lp->_regs,LP_NONE, LP_NONE); }
+    lp->builtins = lp_dict_new(lp);
+	lp->path = lp_list_new(lp);
+    lp->modules = lp_dict_new(lp);
+    lp->_params = lp_list_new(lp);
+    for (i=0; i<LP_FRAMES; i++) { lp_setv(lp,lp->_params, LP_NONE,lp_list_new(lp)); }
+    lp_set(lp,lp->root, LP_NONE,lp->builtins);
+    lp_set(lp,lp->root, LP_NONE,lp->modules);
+    lp_set(lp,lp->root, LP_NONE,lp->_regs);
+    lp_set(lp,lp->root, LP_NONE,lp->_params);
+    lp_setk(lp,lp->builtins,lp_string_new(lp, "MODULES"),lp->modules);
+    lp_setk(lp,lp->modules,lp_string_new(lp, "BUILTINS"),lp->builtins);
+    lp_setk(lp,lp->builtins,lp_string_new(lp, "BUILTINS"),lp->builtins);
+    lp_obj* sys = lp_dict_new(lp);
+    lp_setkv(lp, sys, lp_string_new(lp, "version"), lp_string_new(lp, "tinypy 1.2+SVN"));
+    lp_setk(lp,lp->modules, lp_string_new(lp, "sys"), sys);
+	lp_setk(lp, sys, lp_string_new(lp, "path"), lp->path);
+	_lp_list_appendx(lp, lp->path->list, lp_string_new(lp, "."));
     lp->regs = lp->_regs->list->items;
     return lp;
 }
@@ -392,9 +392,9 @@ int lp_step(LP) {
 
 #define debug(fmt, ...) { lp_obj* t = lp_printf(lp, "%d : "fmt, (int)(cur-begin), __VA_ARGS__); _lp_list_appendx(lp, out->list, t); }
 
-lp_obj* lp_disasm(LP, lp_obj* code)
+lp_obj lp_disasm(LP, lp_obj code)
 {
-	lp_obj* out = lp_list(lp);
+	lp_obj out = lp_list_new(lp);
 	lp_code *cur = (lp_code *)code->string.val;
 	lp_code *begin = cur, *end = cur + code->string.len / sizeof(lp_code);
 	while (1) {
@@ -790,20 +790,20 @@ void lp_builtins(LP) {
 
 
 void lp_args(LP,int argc, char *argv[]) {
-    lp_obj* self = lp_list(lp), *v;
+    lp_obj self = lp_list_new(lp), *v;
     int i;
     for (i=1; i<argc; i++)
 	{
-		lp_obj* v = lp_string(lp, argv[i]);
+		lp_obj v = lp_string_new(lp, argv[i]);
 		_lp_list_append(lp,self->list,v);
 		LP_OBJ_DEC(v);
 	}
-	v = lp_string(lp, "ARGV");
+	v = lp_string_new(lp, "ARGV");
     lp_set(lp,lp->builtins,v,self);
 	LP_OBJ_DEC(v);
 }
 
-lp_obj* lp_main(LP,char *fname, void *code, int len) {
+lp_obj lp_main(LP,char *fname, void *code, int len) {
     return lp_import_(lp,fname,"__main__",code, len);
 }
 
