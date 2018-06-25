@@ -10,8 +10,8 @@
  *
  * Returns a string object representating self.
  */
-lp_obj lp_str(LP,lp_obj self) {
-    int type = self & 7;
+lp_obj* lp_str(LP,lp_obj* self) {
+    int type = self->type;
     if (type == LP_STRING) { RETURN_LP_OBJ(self); }
 	else if (type == LP_INT) {
 		return lp_printf(lp, "%d", self->integer);
@@ -38,7 +38,7 @@ lp_obj lp_str(LP,lp_obj self) {
  * type None or v is a string list or dictionary with a length of 0. Else true
  * is returned.
  */
-int lp_bool(LP,lp_obj v) {
+int lp_bool(LP,lp_obj* v) {
     switch((v & 0x7)) {
         case LP_INT: return lp_obj_to_int(lp, v) != 0;
 		case LP_DOUBLE:	return v->doublen != 0.0;

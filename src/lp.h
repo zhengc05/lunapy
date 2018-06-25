@@ -511,7 +511,8 @@ lp_inline lp_obj lp_string_new(LP, char const *v) {
     return val;
 }
 
-lp_obj lp_string_copy(LP, const char *s, int n);
+lp_obj* lp_string_t(LP, int n);
+lp_obj* lp_string_copy(LP, const char *s, int n);
 
 #define LP_CSTR_LEN 256
 

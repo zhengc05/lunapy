@@ -232,7 +232,7 @@ static lp_obj* random_seed(LP)
 
 static lp_obj* random_getstate(LP)
 {
-    lp_obj* state_list = lp_list_new(lp);
+    lp_obj* state_list = lp_list(lp);
     int i;
 
     for (i = 0; i < N; i++) {
