@@ -5,32 +5,33 @@
  * Various functions to help interface tinypy.
  */
 
-lp_obj _lp_dcall(LP,lp_obj fnc(LP)) {
+lp_obj* _lp_dcall(LP,lp_obj* fnc(LP)) {
     return fnc(lp);
 }
-lp_obj lp_tcall(LP,lp_obj fnc) {
-	lp_fnc* _fnc = tp_obj_to_fnc(lp, fnc);
-    if (_fnc->ftype&2) {
-        _lp_list_insert(lp,tp_obj_to_list(lp->params),0,_fnc->self);
+lp_obj* lp_tcall(LP,lp_obj* fnc) {
+    if (fnc->fnc.ftype&2) {
+        _lp_list_insert(lp,lp->params->list,0,fnc->fnc.info->self);
     }
-    return _lp_dcall(lp,(lp_obj *(*)(lp_vm *))_fnc->cfnc);
+    return _lp_dcall(lp,(lp_obj *(*)(lp_vm *))fnc->fnc.cfnc);
 }
 
-lp_obj lp_fnc_new(LP,int t, void *v, lp_obj c,lp_obj s, lp_obj g) {
-    lp_fnc *info = lp_fnc_malloc(lp);
-	info->ftype = t;
+lp_obj* lp_fnc_new(LP,int t, void *v, lp_obj* c,lp_obj* s, lp_obj* g) {
+    lp_obj* r = lp_obj_new(lp, LP_FNC);
+    _lp_fnc *info = lp_fnc_malloc(lp);
     info->code = c;
     info->self = s;
     info->globals = g;
-	info->cfnc = v;
 	LP_OBJ_INC(c);
 	LP_OBJ_INC(s);
 	LP_OBJ_INC(g);
-    return ((unsigned int)info) | LP_FNC;
+    r->fnc.ftype = t;
+    r->fnc.info = info;
+    r->fnc.cfnc = v;
+    return r;
 }
 
-lp_obj lp_def(LP,lp_obj code, lp_obj g) {
-    lp_obj r = lp_fnc_new(lp,1,0,code,lp->lp_None,g);
+lp_obj* lp_def(LP,lp_obj* code, lp_obj* g) {
+    lp_obj* r = lp_fnc_new(lp,1,0,code,lp->lp_None,g);
     return r;
 }
 
@@ -40,11 +41,11 @@ lp_obj lp_def(LP,lp_obj code, lp_obj g) {
  * This is how you can create a tinypy function object which, when called in
  * the script, calls the provided C function.
  */
-lp_obj lp_fnc_n(LP,lp_obj v(LP)) {
+lp_obj* lp_fnc(LP,lp_obj* v(LP)) {
     return lp_fnc_new(lp,0,v,lp->lp_None,lp->lp_None,lp->lp_None);
 }
 
-lp_obj lp_method(LP,lp_obj self,lp_obj v(LP)) {
+lp_obj* lp_method(LP,lp_obj* self,lp_obj* v(LP)) {
     return lp_fnc_new(lp,2,v,lp->lp_None,self,lp->lp_None);
 }
 
@@ -78,12 +79,12 @@ lp_obj lp_method(LP,lp_obj self,lp_obj v(LP)) {
  * > lp_obj my_obj = lp_data(LP, 0, my_ptr);
  * > my_obj.data.info->free = __free__;
  */
-lp_obj lp_data_new(LP,int magic,void *v) {
-	lp_data* data = _lp_data_malloc(lp);
-    data->free_fun = 0;
-    data->val = v;
-    data->magic = magic;
-    return ((unsigned int)data) | LP_DATA;
+lp_obj* lp_data(LP,int magic,void *v) {
+    lp_obj* r = lp_obj_new(lp, LP_DATA);
+    r->data.free_fun = 0;
+    r->data.val = v;
+    r->data.magic = magic;
+    return r;
 }
 
 /* Function: lp_params
@@ -93,16 +94,15 @@ lp_obj lp_data_new(LP,int magic,void *v) {
  * list of parameters getting passed to it. Usually, you may want to use
  * <lp_params_n> or <lp_params_v>.
  */
-lp_obj lp_params(LP) {
-    lp_obj r;
-	lp_list* list;
-    r = lp_obj_to_list(lp, lp->_params)->items[lp->cur];
-	list = lp_obj_to_list(lp, r);
-	for (int i = 0; i < list->len; i++)
+lp_obj* lp_params(LP) {
+    lp_obj* r;
+    lp->params = lp->_params->list->items[lp->cur];
+    r = lp->params;
+	for (int i = 0; i < r->list->len; i++)
 	{
-		lp_obj_dec(lp, list->items[i]);
+		lp_obj_dec(lp, r->list->items[i]);
 	}
-    list->len = 0;
+    r->list->len = 0;
     return r;
 }
 
@@ -118,9 +118,9 @@ lp_obj lp_params(LP) {
  * Returns:
  * The parameters list. You may modify it before performing the function call.
  */
-void lp_params_n(LP,int n, lp_obj argv[]) {
+void lp_params_n(LP,int n, lp_obj* argv[]) {
     lp_obj* r = lp_params(lp);
-    int i; for (i=0; i<n; i++) { _lp_list_append(lp,lp_obj_to_list(lp, r),argv[i]); }
+    int i; for (i=0; i<n; i++) { _lp_list_append(lp,r->list,argv[i]); }
 }
 
 /* Function: lp_params_v
@@ -140,20 +140,20 @@ void lp_params_n(LP,int n, lp_obj argv[]) {
  */
 void lp_params_v(LP,int n,...) {
     int i;
-    lp_obj r = lp_params(lp);
+    lp_obj* r = lp_params(lp);
     va_list a; va_start(a,n);
     for (i=0; i<n; i++) {
-        _lp_list_append(lp, lp_obj_to_list(lp, r),va_arg(a,lp_obj*));
+        _lp_list_append(lp,r->list,va_arg(a,lp_obj*));
     }
     va_end(a);
 }
 
 void lp_params_v_x(LP, int n, ...) {
 	int i;
-	lp_obj r = lp_params(lp);
+	lp_obj* r = lp_params(lp);
 	va_list a; va_start(a, n);
 	for (i = 0; i<n; i++) {
-		_lp_list_appendx(lp, lp_obj_to_list(lp, r), va_arg(a, lp_obj*));
+		_lp_list_appendx(lp, r->list, va_arg(a, lp_obj*));
 	}
 	va_end(a);
 }
